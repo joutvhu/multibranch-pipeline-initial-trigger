@@ -1,0 +1,129 @@
+name: Initial Repository
+
+on:
+  push:
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    if: ${{ github.repository != 'joutvhu/java-library-template' }}
+    permissions:
+      issues: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'feature',
+              color: '1D76DB',
+              description: 'Request some feature'
+            });
+
+            github.rest.issues.createLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'dependency',
+              color: '006B75',
+              description: 'Bump version for dependencies'
+            });
+
+            github.rest.issues.createLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'support',
+              color: 'C80F6D',
+              description: 'Request for support'
+            });
+
+      - uses: actions/github-script@v6
+        id: get_info
+        with:
+          script: |
+            const query = `query($owner:String!, $name:String!) {
+              repository(owner:$owner, name:$name) {
+                name
+                description
+                owner {
+                  login
+                  ... on User {
+                    name
+                  }
+                  ... on Organization {
+                    name
+                  }
+                }
+              }
+            }`;
+            const variables = {
+              owner: context.repo.owner,
+              name: context.repo.repo
+            };
+            const result = await github.graphql(query, variables);
+            result.repository.spring = result.repository.name.startsWith('spring-');
+            result.repository.display = result.repository.name
+              .split('-').map(v => v[0].toUpperCase() + v.substr(1)).join(' ');
+            return result;
+
+      - name: Split repository info
+        id: repo_info
+        env:
+          INFO: ${{ steps.get_info.outputs.result }}
+        run: |
+          echo "::set-output name=name::$(echo $INFO | jq -r .repository.name)"
+          echo "::set-output name=spring::$(echo $INFO | jq -r .repository.spring)"
+          echo "::set-output name=display::$(echo $INFO | jq -r .repository.display)"
+          echo "::set-output name=description::$(echo $INFO | jq -r .repository.description)"
+          echo "::set-output name=username::$(echo $INFO | jq -r .repository.owner.login)"
+          echo "::set-output name=fullname::$(echo $INFO | jq -r .repository.owner.name)"
+
+      - name: Rename by new info
+        shell: bash
+        run: |
+          workflows=".github/workflows/"
+          is_spring="${{ steps.repo_info.outputs.spring }}"
+
+          original_name="java-library-template"
+          original_display="Java Library Template"
+          original_description="Template for java library using gradle"
+          original_username="joutvhu"
+          original_fullname="Giao Ho"
+
+          new_name="${{ steps.repo_info.outputs.name }}"
+          new_display="${{ steps.repo_info.outputs.display }}"
+          new_description="${{ steps.repo_info.outputs.description }}"
+          new_username="${{ steps.repo_info.outputs.username }}"
+          new_fullname="${{ steps.repo_info.outputs.fullname }}"
+
+          for filename in $(git ls-files)
+          do
+            if [[ $filename != $workflows* ]]
+            then
+              sed -i "s/$original_name/$new_name/g" $filename
+              sed -i "s/$original_display/$new_display/g" $filename
+              sed -i "s/$original_description/$new_description/g" $filename
+              sed -i "s/$original_username/$new_username/g" $filename
+              sed -i "s/$original_fullname/$new_fullname/g" $filename
+            fi
+          done
+
+          if [ $is_spring = "false" ]
+          then
+            sed -i '8d;33d;38d;85d;86d;87d;88d' build.gradle
+          fi
+
+      - name: Remove initial action
+        run: |
+          rm .github/workflows/initial.yml
+
+      - name: Force push new repo contents
+        run: |
+          git config --global user.name "GitHub"
+          git config --global user.email "noreply@github.com"
+          git add --all
+          git commit -m "Initial library" --author="github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          git push origin --force

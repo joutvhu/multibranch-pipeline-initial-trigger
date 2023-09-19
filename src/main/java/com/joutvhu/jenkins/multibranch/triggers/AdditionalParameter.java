@@ -1,4 +1,4 @@
-package com.github.joutvhu.jenkins.multibranch.triggers;
+package com.joutvhu.jenkins.multibranch.triggers;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;

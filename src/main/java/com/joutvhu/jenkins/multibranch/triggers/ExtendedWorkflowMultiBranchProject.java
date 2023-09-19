@@ -1,4 +1,4 @@
-package com.github.joutvhu.jenkins.multibranch.triggers;
+package com.joutvhu.jenkins.multibranch.triggers;
 
 import hudson.Extension;
 import hudson.model.Item;
@@ -21,12 +21,10 @@ public class ExtendedWorkflowMultiBranchProject extends WorkflowBranchProjectFac
             super.onDeleted(item);
             PipelineTriggerProperty.triggerPipelineTriggerPropertyFromParentForOnDelete(item);
         }
-
     }
 
     @Extension
-    public static class RunListenerImpl extends RunListener<Run>
-    {
+    public static class RunListenerImpl extends RunListener<Run> {
         @Override
         public void onDeleted(Run run) {
             super.onDeleted(run);

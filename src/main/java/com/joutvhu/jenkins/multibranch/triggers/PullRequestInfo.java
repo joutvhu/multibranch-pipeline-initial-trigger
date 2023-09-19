@@ -1,4 +1,5 @@
-package com.github.joutvhu.jenkins.multibranch.triggers;
+package com.joutvhu.jenkins.multibranch.triggers;
+
 /**
  * Class for storing Pull Request source and target branch names
  */

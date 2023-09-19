@@ -44,7 +44,6 @@ ext {
 
 dependencyManagement {
     imports {
-//        mavenBom 'io.jenkins.tools.bom:bom-2.401.x:2329.v078520e55c19'
         mavenBom 'io.jenkins.tools.bom:bom-2.302.x:923.v08bdc07cd40f'
     }
     dependencies {

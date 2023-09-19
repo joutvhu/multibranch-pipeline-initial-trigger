@@ -5,10 +5,11 @@ plugins {
     id 'signing'
     id 'java-library'
     id 'maven-publish'
+    id 'org.jenkins-ci.jpi' version '0.49.0'
     id 'io.spring.dependency-management' version '1.1.3'
 }
 
-group = 'com.github.joutvhu'
+group = 'com.github.joutvhu.jenkins'
 version = '1.0.0'
 
 sourceCompatibility = 1.8
@@ -25,6 +26,9 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url 'https://repo.jenkins-ci.org/public'
+    }
 }
 
 ext {
@@ -39,6 +43,10 @@ ext {
 }
 
 dependencyManagement {
+    imports {
+//        mavenBom 'io.jenkins.tools.bom:bom-2.401.x:2329.v078520e55c19'
+        mavenBom 'io.jenkins.tools.bom:bom-2.302.x:923.v08bdc07cd40f'
+    }
     dependencies {
         ext.managedVersions.each {
             dependency "${it.key}:${ext.versions[it.value]}"
@@ -47,6 +55,13 @@ dependencyManagement {
 }
 
 dependencies {
+    implementation 'org.jenkins-ci.plugins:git'
+    implementation 'org.jenkins-ci.plugins:branch-api'
+    implementation 'org.jenkins-ci.plugins:jackson2-api'
+    implementation 'org.jenkins-ci.plugins:cloudbees-folder'
+    implementation 'org.jenkins-ci.plugins.workflow:workflow-job'
+    implementation 'org.jenkins-ci.plugins.workflow:workflow-multibranch'
+
     compileOnly 'org.projectlombok:lombok:1.18.28'
     annotationProcessor 'org.projectlombok:lombok:1.18.28'
 
@@ -103,6 +118,40 @@ test {
     filter {
         includeTestsMatching 'com.joutvhu.*'
     }
+}
+
+jenkinsPlugin {
+    jenkinsVersion = '2.300'
+    shortName = project.name
+    displayName = 'Multibranch Pipeline Triggers'
+    gitHubUrl = 'https://github.com/joutvhu/multibranch-pipeline-triggers'
+    scmTag = "v$version"
+    pluginFirstClassLoader = true
+    compatibleSinceVersion = version
+    workDir = file('/tmp/jenkins')
+    repoUrl = 'https://github.com/joutvhu/multibranch-pipeline-triggers'
+    configureRepositories = false
+    configurePublishing = false
+    fileExtension = 'hpi'
+
+    developers {
+        developer {
+            id = 'joutvhu'
+            name = 'Giáo Hồ'
+            email = 'joutvhu@gmail.com'
+        }
+    }
+
+    licenses {
+        license {
+            name = 'MIT License'
+            url = 'https://github.com/joutvhu/multibranch-pipeline-triggers/blob/main/LICENSE'
+        }
+    }
+
+    enableSpotBugs()
+    enableCheckstyle()
+    enableJacoco()
 }
 
 publishing {

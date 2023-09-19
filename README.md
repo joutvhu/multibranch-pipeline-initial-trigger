@@ -1,3 +1,3 @@
-# Java Library Template
+# Multibranch Pipeline Triggers
 
-Template for java library using gradle
+Multibranch Pipeline Triggers

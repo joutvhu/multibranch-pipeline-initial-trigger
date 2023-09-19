@@ -78,7 +78,7 @@ jar {
     manifest {
         attributes 'Built-By': 'joutvhu (Giáo Hồ)'
         attributes 'Build-Date': java.time.Instant.now().toString()
-        attributes 'Bundle-Name': 'Multibranch Pipeline Triggers'
+        attributes 'Bundle-Name': 'Multibranch Pipeline Initial Trigger'
         attributes 'Bundle-Vendor': project.group
         attributes 'Bundle-SymbolicName': project.name
         attributes 'Bundle-Version': project.version
@@ -122,7 +122,7 @@ test {
 jenkinsPlugin {
     jenkinsVersion = '2.300'
     shortName = project.name
-    displayName = 'Multibranch Pipeline Triggers'
+    displayName = 'Multibranch Pipeline Initial Trigger'
     gitHubUrl = 'https://github.com/joutvhu/multibranch-pipeline-triggers'
     scmTag = "v$version"
     pluginFirstClassLoader = true
@@ -163,7 +163,7 @@ publishing {
 
             pom {
                 name = project.name
-                description = 'Multibranch Pipeline Triggers'
+                description = 'Multibranch Pipeline Initial Trigger'
                 url = 'https://github.com/joutvhu/multibranch-pipeline-triggers'
                 licenses {
                     license {

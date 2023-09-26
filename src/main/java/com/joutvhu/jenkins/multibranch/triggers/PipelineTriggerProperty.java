@@ -11,14 +11,10 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.StringParameterValue;
 import hudson.util.DescribableList;
-import jenkins.branch.Branch;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import jenkins.model.Jenkins;
-import jenkins.scm.api.SCMHead;
-import jenkins.scm.api.mixin.ChangeRequestSCMHead2;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty;
 import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -31,23 +27,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-/**
- * Job property to enable setting jobs to trigger when a pipeline is created or deleted.
- * In details by this, multi branch pipeline will trigger other job/jobs depending on the configuration.
- * Jobs defined in Pipeline Pre Create Jobs Trigger Field, will be triggered when a new pipeline created by branch indexing.
- * Jobs defined in Pipeline Post Create Jobs Trigger Field, will be triggered when a pipeline is deleted by branch indexing.
- * Jobs defined in the Pipeline Run Delete Jobs Trigger Field will be triggered when a Pipeline run is deleted
- * (either by explicitly deleting the run or the branch in the run.
- */
 public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchProject<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(PipelineTriggerProperty.class.getName());
 
-    private static final String sourceBranchName = "SOURCE_BRANCH_NAME";
-    private static final String targetBranchName = "TARGET_BRANCH_NAME";
-
     private static final int quitePeriod = 0;
 
-    private String jobFilter = "*";
+    private String jobIncludeFilter = "";
+    private String jobExcludeFilter = "";
     private List<AdditionalParameter> additionalParameters = new ArrayList<>();
 
     /**
@@ -55,10 +41,12 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      */
     @DataBoundConstructor
     public PipelineTriggerProperty(
-        String jobFilter,
+        String jobIncludeFilter,
+        String jobExcludeFilter,
         List<AdditionalParameter> additionalParameters
     ) {
-        this.setJobFilter(jobFilter);
+        this.setJobIncludeFilter(jobIncludeFilter);
+        this.setJobExcludeFilter(jobExcludeFilter);
         this.setAdditionalParameters(additionalParameters);
     }
 
@@ -148,8 +136,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      */
     private void buildJobs(WorkflowJob workflowJob) {
         List<ParameterValue> parameterValues = new ArrayList<>();
+        parameterValues.add(new StringParameterValue("MULTIBRANCH_JOB_TRIGGER_EVENT", "CREATE", "Set by Multibranch Pipeline Initial Trigger"));
         for (AdditionalParameter additionalParameter : this.getAdditionalParameters()) {
-            parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(), "Set by MultiBranch Pipeline Plugin"));
+            parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(), "Set by Multibranch Pipeline Initial Trigger"));
         }
         ParametersAction parametersAction = new ParametersAction(parameterValues);
         workflowJob.scheduleBuild2(quitePeriod, parametersAction);
@@ -163,43 +152,59 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) workflowJob.getParent();
         PipelineTriggerProperty pipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
         if (pipelineTriggerProperty != null) {
-            if (checkJobFilter(workflowJob.getName(), pipelineTriggerProperty)) {
+            if (checkJobExcludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
+                LOGGER.log(Level.INFO, "[Multibranch Pipeline Initial Trigger] {0} excluded by the Job Exclude Filter", workflowJob.getName());
+            } else if (checkJobIncludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
                 pipelineTriggerProperty.buildJobs(workflowJob);
             } else {
-                LOGGER.log(Level.INFO, "[Multibranch Pipeline Initial Trigger] {0} not included by the Include Filter", workflowJob.getName());
+                LOGGER.log(Level.INFO, "[Multibranch Pipeline Initial Trigger] {0} not included by the Job Include Filter", workflowJob.getName());
             }
         }
     }
 
-    public String getJobFilter() {
-        return jobFilter;
+    public String getJobIncludeFilter() {
+        return jobIncludeFilter;
     }
 
     @DataBoundSetter
-    public void setJobFilter(String jobFilter) {
-        this.jobFilter = jobFilter;
+    public void setJobIncludeFilter(String jobIncludeFilter) {
+        this.jobIncludeFilter = jobIncludeFilter;
     }
 
-    private boolean checkJobFilter(String projectName, PipelineTriggerProperty pipelineTriggerProperty) {
-        String wildcardDefinitions = pipelineTriggerProperty.getJobFilter();
+    public String getJobExcludeFilter() {
+        return jobExcludeFilter;
+    }
+
+    @DataBoundSetter
+    public void setJobExcludeFilter(String jobExcludeFilter) {
+        this.jobExcludeFilter = jobExcludeFilter;
+    }
+
+    private boolean checkJobIncludeFilter(String projectName, PipelineTriggerProperty pipelineTriggerProperty) {
+        String wildcardDefinitions = pipelineTriggerProperty.getJobIncludeFilter();
+        return Pattern.matches(convertToPattern(wildcardDefinitions), projectName);
+    }
+
+    private boolean checkJobExcludeFilter(String projectName, PipelineTriggerProperty pipelineTriggerProperty) {
+        String wildcardDefinitions = pipelineTriggerProperty.getJobExcludeFilter();
         return Pattern.matches(convertToPattern(wildcardDefinitions), projectName);
     }
 
     public static String convertToPattern(String wildcardDefinitions) {
         StringBuilder quotedBranches = new StringBuilder();
         for (String wildcard : wildcardDefinitions.split(" ")) {
-            StringBuilder quotedBranch = new StringBuilder();
-            for (String branch : wildcard.split("(?=[*])|(?<=[*])")) {
-                if (branch.equals("*")) {
-                    quotedBranch.append(".*");
-                } else if (!branch.isEmpty()) {
-                    quotedBranch.append(Pattern.quote(branch));
+            StringBuilder quotedJob = new StringBuilder();
+            for (String job : wildcard.split("(?=[*])|(?<=[*])")) {
+                if (job.equals("*")) {
+                    quotedJob.append(".*");
+                } else if (!job.isEmpty()) {
+                    quotedJob.append(Pattern.quote(job));
                 }
             }
             if (quotedBranches.length() > 0) {
                 quotedBranches.append("|");
             }
-            quotedBranches.append(quotedBranch);
+            quotedBranches.append(quotedJob);
         }
         return quotedBranches.toString();
     }

@@ -81,7 +81,7 @@ jar {
     }
 }
 
-task fatJar(type: Jar) {
+task fatJar(type: Jar, dependsOn: jar) {
     manifest.from jar.manifest
     with jar
 }

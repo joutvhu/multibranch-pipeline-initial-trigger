@@ -79,6 +79,14 @@ jar {
         attributes 'Bundle-SymbolicName': project.name
         attributes 'Bundle-Version': project.version
     }
+    into("META-INF/maven/${project.group}/${project.name}") {
+        from {
+            generatePomFileForMavenJpiPublication
+        }
+        rename {
+            it.replace('pom-default.xml', 'pom.xml')
+        }
+    }
 }
 
 task fatJar(type: Jar, dependsOn: jar) {
@@ -161,7 +169,6 @@ publishing {
             }
 
             pom {
-                name = project.name
                 description = description
                 url = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger'
                 scm {

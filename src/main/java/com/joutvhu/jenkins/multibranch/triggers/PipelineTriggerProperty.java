@@ -30,15 +30,10 @@ import java.util.regex.Pattern;
 public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchProject<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(PipelineTriggerProperty.class.getName());
 
-    private static final int quitePeriod = 0;
-
     private String jobIncludeFilter = "";
     private String jobExcludeFilter = "";
     private List<AdditionalParameter> additionalParameters = new ArrayList<>();
 
-    /**
-     * @see DataBoundConstructor
-     */
     @DataBoundConstructor
     public PipelineTriggerProperty(
         String jobIncludeFilter,
@@ -141,7 +136,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
             parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(), "Set by Multibranch Pipeline Initial Trigger"));
         }
         ParametersAction parametersAction = new ParametersAction(parameterValues);
-        workflowJob.scheduleBuild2(quitePeriod, parametersAction);
+        workflowJob.scheduleBuild2(0, parametersAction);
     }
 
     public void triggerActionJobs(WorkflowJob workflowJob) {

@@ -40,7 +40,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build with Gradle
-        run: ./gradlew clean build
+        run: ./gradlew clean build jpi
 
       - name: Get current release
         id: current_release

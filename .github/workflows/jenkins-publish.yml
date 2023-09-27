@@ -25,7 +25,6 @@ jobs:
           path: ~/.jenkins-ci.org
           contents: ${{ secrets.JENKINS_CI_ACCOUNT }}
           write_mode: overwrite
-          encoding: base64
 
       - uses: actions/cache@v3
         with:

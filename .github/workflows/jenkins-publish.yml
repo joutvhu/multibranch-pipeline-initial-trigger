@@ -1,0 +1,61 @@
+name: Jenkins Publish
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+
+      - name: Write jenkns-ci file
+        uses: joutvhu/write-file@v1
+        with:
+          path: ~/.jenkins-ci.org
+          contents: ${{ secrets.JENKINS_CI_ACCOUNT }}
+          write_mode: overwrite
+          encoding: base64
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      - name: Get current release
+        id: current_release
+        uses: joutvhu/get-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the plugin
+        run: ./gradlew publish
+
+      - name: Upload hpi file
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.current_release.outputs.upload_url }}
+          asset_name: multibranch-pipeline-initial-trigger.hpi
+          asset_path: ./build/libs/multibranch-pipeline-initial-trigger.hpi

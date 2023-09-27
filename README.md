@@ -1,3 +1,3 @@
-# Multibranch Pipeline Triggers
+# Multibranch Pipeline Initial Trigger
 
-Multibranch Pipeline Triggers
+Trigger the Multi-Branch Pipeline Job after it is created

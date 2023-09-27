@@ -10,7 +10,7 @@ plugins {
 }
 
 group = 'com.github.joutvhu.jenkins'
-version = '1.0.0'
+version = '1.0.0-SNAPSHOT'
 description = 'Trigger the Multi-Branch Pipeline Job after it is created'
 
 sourceCompatibility = 1.8
@@ -55,11 +55,6 @@ dependencyManagement {
 }
 
 dependencies {
-    implementation 'org.jenkins-ci.plugins:git'
-    implementation 'org.jenkins-ci.plugins:branch-api'
-    implementation 'org.jenkins-ci.plugins:jackson2-api'
-    implementation 'org.jenkins-ci.plugins:cloudbees-folder'
-    implementation 'org.jenkins-ci.plugins.workflow:workflow-job'
     implementation 'org.jenkins-ci.plugins.workflow:workflow-multibranch'
 
     compileOnly 'org.projectlombok:lombok:1.18.28'
@@ -126,13 +121,17 @@ jenkinsPlugin {
     displayName = 'Multibranch Pipeline Initial Trigger'
     gitHubUrl = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger'
     scmTag = "v$version"
-    pluginFirstClassLoader = true
+    pluginFirstClassLoader = false
     compatibleSinceVersion = version
-    workDir = file('/tmp/jenkins')
-    repoUrl = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger'
+    maskClasses = 'com.joutvhu.jenkins'
     configureRepositories = false
     configurePublishing = false
     fileExtension = 'hpi'
+
+    workDir = file('/tmp/jenkins')
+
+    repoUrl = 'https://repo.jenkins-ci.org/releases'
+    snapshotRepoUrl = 'https://repo.jenkins-ci.org/snapshots'
 
     developers {
         developer {

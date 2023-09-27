@@ -116,8 +116,8 @@ jenkinsPlugin {
     pluginFirstClassLoader = false
     compatibleSinceVersion = version
     maskClasses = 'com.joutvhu.jenkins'
-    configureRepositories = false
-    configurePublishing = false
+    configureRepositories = true
+    configurePublishing = true
     fileExtension = 'hpi'
 
     workDir = file('/tmp/jenkins')
@@ -142,4 +142,43 @@ jenkinsPlugin {
 
     enableSpotBugs()
     enableJacoco()
+}
+
+publishing {
+    publications {
+        mavenJpi(MavenPublication) {
+            groupId = group
+            artifactId = project.name
+            version = version
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name = project.name
+                description = description
+                url = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger'
+                scm {
+                    connection = 'scm:git:git@github.com:joutvhu/multibranch-pipeline-initial-trigger.git'
+                    developerConnection = 'scm:git:git@github.com:joutvhu/multibranch-pipeline-initial-trigger.git'
+                    url = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger'
+                }
+                issueManagement {
+                    system = 'Github Issue'
+                    url = 'https://github.com/joutvhu/multibranch-pipeline-initial-trigger/issues'
+                }
+                organization {
+                    name = 'Giao Ho'
+                    url = 'https://github.com/joutvhu'
+                }
+                properties = project.ext.versions instanceof Map ? project.ext.versions : new HashMap<>()
+            }
+        }
+    }
 }

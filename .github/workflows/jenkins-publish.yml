@@ -47,9 +47,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish the plugin
-        run: ./gradlew publish -Dorg.gradle.internal.publish.checksums.insecure
-
       - name: Upload hpi file
         uses: actions/upload-release-asset@v1
         env:
@@ -59,3 +56,6 @@ jobs:
           asset_name: multibranch-pipeline-initial-trigger.hpi
           asset_path: ./build/libs/multibranch-pipeline-initial-trigger.hpi
           asset_content_type: application/zip
+
+      - name: Publish the plugin
+        run: ./gradlew publish -Dorg.gradle.internal.publish.checksums.insecure

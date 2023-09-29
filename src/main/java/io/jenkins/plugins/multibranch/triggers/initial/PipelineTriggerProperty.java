@@ -1,4 +1,4 @@
-package com.joutvhu.jenkins.multibranch.triggers;
+package io.jenkins.plugins.multibranch.triggers.initial;
 
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;

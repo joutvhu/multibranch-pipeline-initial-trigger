@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: multibranch-pipeline-initial-trigger-$NEXT_MINOR_VERSION

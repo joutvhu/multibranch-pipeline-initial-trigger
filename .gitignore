@@ -92,6 +92,5 @@ nb-configuration.xml
 .vscode/
 .code-workspace
 
-# Secrets
-gradle.properties
-secrets
+# mvn hpi:run
+work

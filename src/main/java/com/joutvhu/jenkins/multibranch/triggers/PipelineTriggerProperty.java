@@ -1,26 +1,18 @@
 package com.joutvhu.jenkins.multibranch.triggers;
 
-import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
-import hudson.Extension;
-import hudson.model.AutoCompletionCandidates;
 import hudson.model.Item;
-import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.StringParameterValue;
 import hudson.util.DescribableList;
 import jenkins.branch.MultiBranchProject;
-import jenkins.branch.OrganizationFolder;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -43,87 +35,6 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         this.setJobIncludeFilter(jobIncludeFilter);
         this.setJobExcludeFilter(jobExcludeFilter);
         this.setAdditionalParameters(additionalParameters);
-    }
-
-    /**
-     * @see AbstractFolderPropertyDescriptor
-     */
-    @Extension
-    public static class DescriptorImpl extends AbstractFolderPropertyDescriptor {
-        /**
-         * @return Property Name
-         * @see AbstractFolderPropertyDescriptor
-         */
-        @Nonnull
-        @Override
-        public String getDisplayName() {
-            return "Pipeline Trigger";
-        }
-
-        /**
-         * Return true if calling class is MultiBranchProject
-         *
-         * @param containerType See AbstractFolder
-         * @return boolean
-         * @see AbstractFolderPropertyDescriptor
-         */
-        @Override
-        public boolean isApplicable(Class<? extends AbstractFolder> containerType) {
-            if (WorkflowMultiBranchProject.class.isAssignableFrom(containerType))
-                return true;
-            else if (OrganizationFolder.class.isAssignableFrom(containerType))
-                return true;
-            else
-                return false;
-        }
-
-        /**
-         * Auto complete methods @createActionJobsToTrigger field.
-         *
-         * @param value Value to search in Job Full Names
-         * @return AutoCompletionCandidates
-         */
-        public AutoCompletionCandidates doAutoCompleteCreateActionJobsToTrigger(@QueryParameter String value) {
-            return this.autoCompleteCandidates(value);
-        }
-
-        /**
-         * Auto complete methods @deleteActionJobsToTrigger field.
-         *
-         * @param value Value to search in Job Full Namesif
-         * @return AutoCompletionCandidates
-         */
-        public AutoCompletionCandidates doAutoCompleteDeleteActionJobsToTrigger(@QueryParameter String value) {
-            return this.autoCompleteCandidates(value);
-        }
-
-        /**
-         * Auto complete methods @deleteActionJobsToTrigger field.
-         *
-         * @param value Value to search in Job Full Namesif
-         * @return AutoCompletionCandidates
-         */
-        public AutoCompletionCandidates doAutoCompleteActionJobsToTriggerOnRunDelete(@QueryParameter String value) {
-            return this.autoCompleteCandidates(value);
-        }
-
-        /**
-         * Get all Job items in Jenkins. Filter them if they contain @value in Job Full names.
-         * Also filter Jobs which have @Item.BUILD and @Item.READ permissions.
-         *
-         * @param value Value to search in Job Full Names
-         * @return AutoCompletionCandidates
-         */
-        private AutoCompletionCandidates autoCompleteCandidates(String value) {
-            AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-            List<Job> jobs = Jenkins.getInstance().getAllItems(Job.class);
-            for (Job job : jobs) {
-                String jobName = job.getFullName();
-                if (jobName.contains(value.trim()) && job.hasPermission(Item.BUILD) && job.hasPermission(Item.READ))
-                    candidates.add(jobName);
-            }
-            return candidates;
-        }
     }
 
     /**

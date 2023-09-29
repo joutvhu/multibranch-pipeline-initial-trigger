@@ -1,13 +1,16 @@
 package io.jenkins.plugins.multibranch.triggers.initial;
 
+import com.cloudbees.hudson.plugins.folder.AbstractFolder;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderProperty;
 import com.cloudbees.hudson.plugins.folder.AbstractFolderPropertyDescriptor;
+import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.StringParameterValue;
 import hudson.util.DescribableList;
 import jenkins.branch.MultiBranchProject;
+import jenkins.branch.OrganizationFolder;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -35,6 +38,38 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
         this.setJobIncludeFilter(jobIncludeFilter);
         this.setJobExcludeFilter(jobExcludeFilter);
         this.setAdditionalParameters(additionalParameters);
+    }
+
+    /**
+     * @see AbstractFolderPropertyDescriptor
+     */
+    @Extension
+    public static class DescriptorImpl extends AbstractFolderPropertyDescriptor {
+        /**
+         * @return Property Name
+         * @see AbstractFolderPropertyDescriptor
+         */
+        @Override
+        public String getDisplayName() {
+            return "Pipeline Trigger";
+        }
+
+        /**
+         * Return true if calling class is MultiBranchProject
+         *
+         * @param containerType See AbstractFolder
+         * @return boolean
+         * @see AbstractFolderPropertyDescriptor
+         */
+        @Override
+        public boolean isApplicable(Class<? extends AbstractFolder> containerType) {
+            if (WorkflowMultiBranchProject.class.isAssignableFrom(containerType))
+                return true;
+            else if (OrganizationFolder.class.isAssignableFrom(containerType))
+                return true;
+            else
+                return false;
+        }
     }
 
     /**

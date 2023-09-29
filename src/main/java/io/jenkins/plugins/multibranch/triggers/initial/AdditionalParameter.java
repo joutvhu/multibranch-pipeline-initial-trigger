@@ -6,8 +6,6 @@ import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import javax.annotation.Nonnull;
-
 public class AdditionalParameter extends AbstractDescribableImpl<AdditionalParameter> {
     private String name;
     private String value;
@@ -38,7 +36,6 @@ public class AdditionalParameter extends AbstractDescribableImpl<AdditionalParam
 
     @Extension
     public static class DescriptorImpl extends Descriptor<AdditionalParameter> {
-        @Nonnull
         @Override
         public String getDisplayName() {
             return "Additional Parameter";

@@ -9,18 +9,17 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.StringParameterValue;
 import hudson.util.DescribableList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import jenkins.branch.MultiBranchProject;
 import jenkins.branch.OrganizationFolder;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchProject<?, ?>> {
     private static final Logger LOGGER = Logger.getLogger(PipelineTriggerProperty.class.getName());
@@ -31,10 +30,7 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     @DataBoundConstructor
     public PipelineTriggerProperty(
-        String jobIncludeFilter,
-        String jobExcludeFilter,
-        List<AdditionalParameter> additionalParameters
-    ) {
+            String jobIncludeFilter, String jobExcludeFilter, List<AdditionalParameter> additionalParameters) {
         this.setJobIncludeFilter(jobIncludeFilter);
         this.setJobExcludeFilter(jobExcludeFilter);
         this.setAdditionalParameters(additionalParameters);
@@ -63,12 +59,9 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
          */
         @Override
         public boolean isApplicable(Class<? extends AbstractFolder> containerType) {
-            if (WorkflowMultiBranchProject.class.isAssignableFrom(containerType))
-                return true;
-            else if (OrganizationFolder.class.isAssignableFrom(containerType))
-                return true;
-            else
-                return false;
+            if (WorkflowMultiBranchProject.class.isAssignableFrom(containerType)) return true;
+            else if (OrganizationFolder.class.isAssignableFrom(containerType)) return true;
+            else return false;
         }
     }
 
@@ -77,9 +70,13 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
      */
     private void buildJobs(WorkflowJob workflowJob) {
         List<ParameterValue> parameterValues = new ArrayList<>();
-        parameterValues.add(new StringParameterValue("MULTIBRANCH_JOB_TRIGGER_EVENT", "CREATE", "Set by Multibranch Pipeline Initial Trigger"));
+        parameterValues.add(new StringParameterValue(
+                "MULTIBRANCH_JOB_TRIGGER_EVENT", "CREATE", "Set by Multibranch Pipeline Initial Trigger"));
         for (AdditionalParameter additionalParameter : this.getAdditionalParameters()) {
-            parameterValues.add(new StringParameterValue(additionalParameter.getName(), additionalParameter.getValue(), "Set by Multibranch Pipeline Initial Trigger"));
+            parameterValues.add(new StringParameterValue(
+                    additionalParameter.getName(),
+                    additionalParameter.getValue(),
+                    "Set by Multibranch Pipeline Initial Trigger"));
         }
         ParametersAction parametersAction = new ParametersAction(parameterValues);
         workflowJob.scheduleBuild2(0, parametersAction);
@@ -87,18 +84,27 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     public void triggerActionJobs(WorkflowJob workflowJob) {
         if (!(workflowJob.getParent() instanceof WorkflowMultiBranchProject)) {
-            LOGGER.log(Level.FINE, "[Multibranch Pipeline Initial Trigger] Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
+            LOGGER.log(
+                    Level.FINE,
+                    "[Multibranch Pipeline Initial Trigger] Caller Job is not child of WorkflowMultiBranchProject. Skipping.");
             return;
         }
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) workflowJob.getParent();
-        PipelineTriggerProperty pipelineTriggerProperty = workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
+        PipelineTriggerProperty pipelineTriggerProperty =
+                workflowMultiBranchProject.getProperties().get(PipelineTriggerProperty.class);
         if (pipelineTriggerProperty != null) {
             if (checkJobExcludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
-                LOGGER.log(Level.INFO, "[Multibranch Pipeline Initial Trigger] {0} excluded by the Job Exclude Filter", workflowJob.getName());
+                LOGGER.log(
+                        Level.INFO,
+                        "[Multibranch Pipeline Initial Trigger] {0} excluded by the Job Exclude Filter",
+                        workflowJob.getName());
             } else if (checkJobIncludeFilter(workflowJob.getName(), pipelineTriggerProperty)) {
                 pipelineTriggerProperty.buildJobs(workflowJob);
             } else {
-                LOGGER.log(Level.INFO, "[Multibranch Pipeline Initial Trigger] {0} not included by the Job Include Filter", workflowJob.getName());
+                LOGGER.log(
+                        Level.INFO,
+                        "[Multibranch Pipeline Initial Trigger] {0} not included by the Job Include Filter",
+                        workflowJob.getName());
             }
         }
     }
@@ -156,25 +162,22 @@ public class PipelineTriggerProperty extends AbstractFolderProperty<MultiBranchP
 
     @DataBoundSetter
     public void setAdditionalParameters(List<AdditionalParameter> additionalParameters) {
-        if (additionalParameters == null)
-            this.additionalParameters = new ArrayList<>();
-        else
-            this.additionalParameters = additionalParameters;
+        if (additionalParameters == null) this.additionalParameters = new ArrayList<>();
+        else this.additionalParameters = additionalParameters;
     }
 
     public static PipelineTriggerProperty getPipelineTriggerPropertyFromItem(Item item) {
         WorkflowMultiBranchProject workflowMultiBranchProject = (WorkflowMultiBranchProject) item.getParent();
-        DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties = workflowMultiBranchProject.getProperties();
+        DescribableList<AbstractFolderProperty<?>, AbstractFolderPropertyDescriptor> properties =
+                workflowMultiBranchProject.getProperties();
         return properties.get(PipelineTriggerProperty.class);
     }
 
     public static void triggerPipelineTriggerPropertyFromParentForOnCreate(Item item) {
         if (item instanceof WorkflowJob && item.getParent() instanceof WorkflowMultiBranchProject) {
             PipelineTriggerProperty pipelineTriggerProperty = getPipelineTriggerPropertyFromItem(item);
-            if (pipelineTriggerProperty != null)
-                pipelineTriggerProperty.triggerActionJobs((WorkflowJob) item);
-            else
-                LOGGER.fine(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
+            if (pipelineTriggerProperty != null) pipelineTriggerProperty.triggerActionJobs((WorkflowJob) item);
+            else LOGGER.fine(String.format("PipelineTriggerProperty is null in Item:%s", item.getFullName()));
         } else {
             LOGGER.fine(String.format("Item:%s is not instance of WorkflowJob", item.getFullName()));
         }
